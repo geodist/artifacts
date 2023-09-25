@@ -1,0 +1,48 @@
+name: geodist
+
+on:
+  schedule:
+    - cron: '0 16 * * *'
+  push: {}
+
+permissions:
+  contents: write
+
+jobs:
+  geo:
+    name: Update Files
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@8ade135a41bc03ea155e62e844d188df1ea18608 # 4.1.0
+
+    - name: Download geoip for sing-box
+      shell: bash
+      run: |
+        curl -sSfL -o sing-geoip.db https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db
+        curl -sSfL -o sing-geoip-cn.db https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip-cn.db
+        curl -sSfL -o sing-geosite.db https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db
+        curl -sSfL -o sing-geoip.db.sha256sum https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip.db.sha256sum
+        curl -sSfL -o sing-geoip-cn.db.sha256sum https://github.com/SagerNet/sing-geoip/releases/latest/download/geoip-cn.db.sha256sum
+        curl -sSfL -o sing-geosite.db.sha256sum https://github.com/SagerNet/sing-geosite/releases/latest/download/geosite.db.sha256sum
+
+    - name: Download geoip for v2fly
+      shell: bash
+      run: |
+        curl -sSfL -o v2fly-geoip.dat https://github.com/v2fly/geoip/releases/latest/download/geoip.dat
+        curl -sSfL -o v2fly-geoip-cn.dat https://github.com/v2fly/geoip/releases/latest/download/cn.dat
+        curl -sSfL -o v2fly-geosite.dat https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat
+        curl -sSfL -o v2fly-geoip.dat.sha256sum https://github.com/v2fly/geoip/releases/latest/download/geoip.dat.sha256sum
+        curl -sSfL -o v2fly-geoip-cn.dat.sha256sum https://github.com/v2fly/geoip/releases/latest/download/cn.dat.sha256sum
+        curl -sSfL -o v2fly-geosite.dat.sha256sum https://github.com/v2fly/domain-list-community/releases/latest/download/dlc.dat.sha256sum
+
+    - name: Commit and Push
+      run: |
+        tag="geo-$(date +'%Y%m%d')"
+        msg="$(date +'%Y%m%d')"
+        git config --local user.name "github-actions[bot]"
+        git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+        git add *-geo*
+        git commit --all --amend --no-edit --reset-author --message "${msg}"
+        git tag "${tag}"
+        git push --follow-tags --force
